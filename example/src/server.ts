@@ -22,15 +22,20 @@ const app = express();
 // server the static content, i.e. index.html
 app.use(express.static(__dirname));
 // start the server
-const server = app.listen(3000);
+const server = app.listen(3001);
 // create the web socket
 const wss = new ws.Server({
     noServer: true,
     perMessageDeflate: false
 });
+
 server.on('upgrade', (request: http.IncomingMessage, socket: net.Socket, head: Buffer) => {
-    const pathname = request.url ? url.parse(request.url).pathname : undefined;
-    if (pathname === '/sampleServer') {
+	const path = request.url ? request.url:'/';
+	const urlpath = url.parse(path, true);
+    const pathname = request.url ? urlpath.pathname : undefined;
+    const queryParams = urlpath.query;
+    const language = queryParams.language;
+    if (pathname === '/sampleServer/') {
         wss.handleUpgrade(request, socket, head, webSocket => {
             const socket: rpc.IWebSocket = {
                 send: content => webSocket.send(content, error => {
@@ -45,9 +50,9 @@ server.on('upgrade', (request: http.IncomingMessage, socket: net.Socket, head: B
             };
             // launch the server when the web socket is opened
             if (webSocket.readyState === webSocket.OPEN) {
-                launch(socket);
+                launch(socket, language);
             } else {
-                webSocket.on('open', () => launch(socket));
+                webSocket.on('open', () => launch(socket, language));
             }
         });
     }

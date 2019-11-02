@@ -1,7 +1,9 @@
-/* --------------------------------------------------------------------------------------------
+ /*--------------------------------------------------------------------------------------------
  * Copyright (c) 2018 TypeFox GmbH (http://www.typefox.io). All rights reserved.
  * Licensed under the MIT License. See License.txt in the project root for license information.
  * ------------------------------------------------------------------------------------------ */
+
+import * as $ from 'jquery'
 import { listen, MessageConnection } from 'vscode-ws-jsonrpc';
 import {
     MonacoLanguageClient, CloseAction, ErrorAction,
@@ -18,42 +20,69 @@ monaco.languages.register({
     mimetypes: ['application/json'],
 });
 
+monaco.languages.register({
+    id: 'python',
+    extensions: ['.py'],
+    aliases: ['PY', 'py'],
+    mimetypes: ['application/python'],
+});
+
+monaco.languages.register({
+    id: 'c',
+    extensions: ['.c'],
+    aliases: ['C', 'c'],
+    mimetypes: ['application/c'],
+});
+
+monaco.languages.register({
+    id: 'cpp',
+    extensions: ['.cpp'],
+    aliases: ['CPP', 'cpp'],
+    mimetypes: ['application/cpp'],
+});
+
+monaco.languages.register({
+    id: 'objective-c',
+    extensions: ['.m'],
+    aliases: ['M', 'm'],
+    mimetypes: ['application/objective-c'],
+});
+
+monaco.languages.register({
+    id: 'javascript',
+    extensions: ['.js'],
+    aliases: ['JS', 'js'],
+    mimetypes: ['application/javascript'],
+});
+
+monaco.languages.register({
+    id: 'java',
+    extensions: ['.java'],
+    aliases: ['JAVA', 'java'],
+    mimetypes: ['application/java'],
+});
+
+monaco.languages.register({
+    id: 'csharp',
+    extensions: ['.cs', '.csx'],
+    aliases: ['CSHARP', 'csharp'],
+    mimetypes: ['application/csharp'],
+});
+
+
 // create Monaco editor
-const value = `{
-    "$schema": "http://json.schemastore.org/coffeelint",
-    "line_endings": "unix"
-}`;
-const editor = monaco.editor.create(document.getElementById("container")!, {
-    model: monaco.editor.createModel(value, 'json', monaco.Uri.parse('inmemory://model.json')),
-    glyphMargin: true,
-    lightbulb: {
-        enabled: true
-    }
-});
+//const value = `{
+//    "$schema": "http://json.schemastore.org/coffeelint",
+//    "line_endings": "unix"
+//}`;
 
-// install Monaco language client services
-MonacoServices.install(editor);
 
-// create the web socket
-const url = createUrl('/sampleServer')
-const webSocket = createWebSocket(url);
-// listen when the web socket is opened
-listen({
-    webSocket,
-    onConnection: connection => {
-        // create and start the language client
-        const languageClient = createLanguageClient(connection);
-        const disposable = languageClient.start();
-        connection.onClose(() => disposable.dispose());
-    }
-});
-
-function createLanguageClient(connection: MessageConnection): MonacoLanguageClient {
+function createLanguageClient(connection: MessageConnection, language: string): MonacoLanguageClient {
     return new MonacoLanguageClient({
         name: "Sample Language Client",
         clientOptions: {
             // use a language id as a document selector
-            documentSelector: ['json'],
+            documentSelector: [language],
             // disable the default error handler
             errorHandler: {
                 error: () => ErrorAction.Continue,
@@ -84,4 +113,105 @@ function createWebSocket(url: string): WebSocket {
         debug: false
     };
     return new ReconnectingWebSocket(url, [], socketOptions);
+}
+
+
+/****************************************************************************************************/
+$(document).ready(function() {
+	const MODES = new Map<string, string>();
+	monaco.languages.getLanguages().forEach(function(item) {
+		const lang: string = item.id;
+		const url = 'https://microsoft.github.io/monaco-editor/index/samples/sample.' + lang + '.txt';
+		MODES.set(lang, url)
+	});
+	
+	$(".language-picker").change(function() {
+		const language:any = $(this).children("option:selected").val() || 'cpp' ;
+		//const language = 'python';
+		const sampleUrl = MODES.get(language);
+		console.log(language, sampleUrl);
+		if(typeof language !== 'undefined' && typeof sampleUrl !== 'undefined') {
+    		loadSample(language.toString(), sampleUrl);
+		}
+	});
+});
+
+function loadSample(language: string, sampleUrl: string) {
+	$.ajax({
+		type: 'GET',
+		url: sampleUrl,
+		dataType: 'text',
+		error: function () {
+			//if (typeof editor !== 'undefined') {
+			//	if (editor.getModel()) {
+			//		editor.getModel().dispose();
+			//	}
+			//	editor.dispose();
+			//	editor = null;
+			//}
+			$('#container').empty();
+			$('#container').append('<p class="alert alert-error">Failed to load ' + language + ' sample</p>');
+		}
+	}).done(function (data) {
+		$('#container').empty();
+
+		/*
+		if(editor) {
+			const oldModel = editor.getModel();
+			if (oldModel) {
+				oldModel.dispose();
+			}
+		}
+		*/
+
+		const editor = monaco.editor.create(document.getElementById("container")!, {
+			theme: 'vs-dark',
+			autoIndent: true,
+			cursorBlinking: 'blink',
+			dragAndDrop: true,
+			gotoLocation: {
+				multiple: "goto"
+			}, 
+			//glyphMargin: true,
+			lightbulb: {
+				enabled: true
+			},
+		});
+
+		const language_ext_map = new Map<string, string>();
+		language_ext_map.set('c', 'c')
+		language_ext_map.set('cpp', 'cpp')
+		language_ext_map.set('objective-c', 'm')
+		language_ext_map.set('python', 'py')
+		language_ext_map.set('java', 'java')
+		language_ext_map.set('javascript', 'js')
+		language_ext_map.set('csharp', 'csx')
+
+		const workingDir = "/home/hackerearth/cquery_files";
+		const suffix = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+		const fileext = language_ext_map.get(language);
+		const filename = "file_" + suffix + "." + fileext;
+		const filepath = workingDir + "/" + filename;
+		const newModel = monaco.editor.createModel(data, language, monaco.Uri.file(filepath));
+		editor.setModel(newModel);
+
+		// install Monaco language client services
+		const options = {rootUri: 'file:///home/hackerearth/cquery_files'};
+		MonacoServices.install(editor, options);
+
+		// create the web socket
+		const url = createUrl('/sampleServer/?language=' + language)
+		const webSocket = createWebSocket(url);
+
+		// listen when the web socket is opened
+		listen({
+			webSocket,
+			onConnection: connection => {
+				// create and start the language client
+				const languageClient = createLanguageClient(connection, language);
+				const disposable = languageClient.start();
+				connection.onClose(() => disposable.dispose());
+			}
+		});
+	});
 }

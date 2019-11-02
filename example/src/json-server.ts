@@ -151,6 +151,7 @@ export class JsonServer {
 
     protected format(params: DocumentRangeFormattingParams): TextEdit[] {
         const document = this.documents.get(params.textDocument.uri);
+        console.log('In TextEdit -> ', params);
         return document ? this.jsonService.format(document, params.range, params.options) : [];
     }
 
