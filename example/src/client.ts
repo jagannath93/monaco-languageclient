@@ -12,7 +12,18 @@ import {
 import normalizeUrl = require('normalize-url');
 const ReconnectingWebSocket = require('reconnecting-websocket');
 
+require('monaco-languages/release/dev/python/python.contribution')
+require('monaco-languages/release/dev/java/java.contribution')
+require('monaco-languages/release/dev/javascript/javascript.contribution')
+//require('monaco-languages/release/dev/c/c.contribution')
+require('monaco-languages/release/dev/cpp/cpp.contribution')
+require('monaco-languages/release/dev/objective-c/objective-c.contribution')
+require('monaco-languages/release/dev/csharp/csharp.contribution')
+
+
+
 // register Monaco languages
+/*
 monaco.languages.register({
     id: 'json',
     extensions: ['.json', '.bowerrc', '.jshintrc', '.jscsrc', '.eslintrc', '.babelrc'],
@@ -69,20 +80,27 @@ monaco.languages.register({
     mimetypes: ['application/csharp'],
 });
 
-
-// create Monaco editor
-//const value = `{
-//    "$schema": "http://json.schemastore.org/coffeelint",
-//    "line_endings": "unix"
-//}`;
+monaco.languages.register({
+    id: 'typescript',
+    extensions: ['.ts'],
+    aliases: ['TYPESCRIPT', 'typescript'],
+    mimetypes: ['application/typescript']
+});
+*/
 
 
 function createLanguageClient(connection: MessageConnection, language: string): MonacoLanguageClient {
+    if (language == 'python2' || language == 'python3') {
+        var baseLanguage = 'python';
+    } else {
+        var baseLanguage = language;
+    }
+
     return new MonacoLanguageClient({
         name: "Sample Language Client",
         clientOptions: {
             // use a language id as a document selector
-            documentSelector: [language],
+            documentSelector: [baseLanguage],
             // disable the default error handler
             errorHandler: {
                 error: () => ErrorAction.Continue,
@@ -124,12 +142,20 @@ $(document).ready(function() {
 		const url = 'https://microsoft.github.io/monaco-editor/index/samples/sample.' + lang + '.txt';
 		MODES.set(lang, url)
 	});
-	
+
+    const cSampleUrl = MODES.get('c') || 'c';
+    loadSample('c', cSampleUrl);
+
 	$(".language-picker").change(function() {
-		const language:any = $(this).children("option:selected").val() || 'cpp' ;
-		//const language = 'python';
-		const sampleUrl = MODES.get(language);
-		console.log(language, sampleUrl);
+        const language:any = $(this).children("option:selected").val() || 'c';
+
+        // Custom handling for python variants
+        if (language == 'python2' || language == 'python3') {
+            var sampleUrl = MODES.get('python')
+        } else {
+            var sampleUrl = MODES.get(language);
+        }
+
 		if(typeof language !== 'undefined' && typeof sampleUrl !== 'undefined') {
     		loadSample(language.toString(), sampleUrl);
 		}
@@ -137,6 +163,12 @@ $(document).ready(function() {
 });
 
 function loadSample(language: string, sampleUrl: string) {
+    if (language == 'python2' || language == 'python3') {
+        var baseLanguage = 'python';
+    } else {
+        var baseLanguage = language;
+    }
+
 	$.ajax({
 		type: 'GET',
 		url: sampleUrl,
@@ -148,7 +180,8 @@ function loadSample(language: string, sampleUrl: string) {
 			//	}
 			//	editor.dispose();
 			//	editor = null;
-			//}
+            //}
+            console.log("loadSample failed!!");
 			$('#container').empty();
 			$('#container').append('<p class="alert alert-error">Failed to load ' + language + ' sample</p>');
 		}
@@ -164,18 +197,20 @@ function loadSample(language: string, sampleUrl: string) {
 		}
 		*/
 
+        console.log("loadSample done");
+
 		const editor = monaco.editor.create(document.getElementById("container")!, {
 			theme: 'vs-dark',
 			autoIndent: true,
 			cursorBlinking: 'blink',
 			dragAndDrop: true,
-			gotoLocation: {
-				multiple: "goto"
-			}, 
+            //gotoLocation: {
+            //	multiple: "goto"
+            //},
 			//glyphMargin: true,
-			lightbulb: {
-				enabled: true
-			},
+            //lightbulb: {
+            //	enabled: true
+            //},
 		});
 
 		const language_ext_map = new Map<string, string>();
@@ -187,16 +222,16 @@ function loadSample(language: string, sampleUrl: string) {
 		language_ext_map.set('javascript', 'js')
 		language_ext_map.set('csharp', 'csx')
 
-		const workingDir = "/home/hackerearth/cquery_files";
+        const workingDir = "/home/careerstack/lsp_files";
 		const suffix = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-		const fileext = language_ext_map.get(language);
+		const fileext = language_ext_map.get(baseLanguage);
 		const filename = "file_" + suffix + "." + fileext;
-		const filepath = workingDir + "/" + filename;
-		const newModel = monaco.editor.createModel(data, language, monaco.Uri.file(filepath));
+        const filepath = workingDir + "/" + filename;
+		const newModel = monaco.editor.createModel(data, baseLanguage, monaco.Uri.file(filepath));
 		editor.setModel(newModel);
 
 		// install Monaco language client services
-		const options = {rootUri: 'file:///home/hackerearth/cquery_files'};
+		const options = {rootUri: 'file:///home/careerstack/lsp_files'};
 		MonacoServices.install(editor, options);
 
 		// create the web socket

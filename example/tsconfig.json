@@ -3,7 +3,7 @@
     "compilerOptions": {
         "rootDir": "src",
         "outDir": "lib",
-        "baseUrl": ".",
+        "baseUrl": "https://microsoft.github.io/monaco-editor/node_modules/monaco-editor/min/",
         "skipLibCheck": true
     },
     "include": [

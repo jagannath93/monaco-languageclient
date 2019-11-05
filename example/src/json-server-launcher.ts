@@ -13,29 +13,41 @@ export function launch(socket: rpc.IWebSocket, language: string) {
     const writer = new rpc.WebSocketMessageWriter(socket);
 
     // start the language servers as external processes
-    const jsServerConnection = server.createServerProcess('JS', 'flow-language-server', ["--try-flow-bin", "--stdio"]);
     const socketConnection = server.createConnection(reader, writer, () => socket.dispose());
-    const pyServerConnection = server.createServerProcess('PYTHON', 'pyls');
-    const cppServerConnection = server.createServerProcess('CPP', 'sh', ["/home/hackerearth/hackerearth/cquery/build/start_cquery.sh"]);
-    const csharpServerConnection = server.createServerProcess('CSHARP', '/home/hackerearth/hackerearth/omnisharp-roslyn/artifacts/scripts/OmniSharp.Stdio', ["-lsp", "-s", "/home/hackerearth/cquery_files"]);
-    const javaServerConnection = server.createServerProcess('JAVA', 'java', [
-                                                                            "-Dfile.encoding=UTF-8",
-                                                                            "-Declipse.application=org.eclipse.jdt.ls.core.id1",
-                                                                            "-Dosgi.bundles.defaultStartLevel=4",
-                                                                            "-Declipse.product=org.eclipse.jdt.ls.core.product",
-                                                                            "-Dlog.level=ALL",
-                                                                            "-jar", "/home/hackerearth/hackerearth/eclipse.jdt.ls/org.eclipse.jdt.ls.product/target/repository/plugins/org.eclipse.equinox.launcher_1.5.600.v20191014-2022.jar",
-                                                                            "-configuration", "/home/hackerearth/hackerearth/eclipse.jdt.ls/org.eclipse.jdt.ls.product/target/repository/config_linux",
-                                                                            "-data", "/home/hackerearth/cquery_files"
-                                                                         ]);
+
     const language_server_map = new Map<string, any>();
-    language_server_map.set('javascript', jsServerConnection)
-    language_server_map.set('c', cppServerConnection)
-    language_server_map.set('cpp', cppServerConnection)
-    language_server_map.set('objective-c', cppServerConnection)
-    language_server_map.set('java', javaServerConnection)
-    language_server_map.set('python', pyServerConnection)
-    language_server_map.set('csharp', csharpServerConnection)
+
+    if(language == 'python2') {
+        const py2ServerConnection = server.createServerProcess('PYTHON2', 'python', ["-m", "pyls"]);
+        language_server_map.set('python2', py2ServerConnection)
+    } else if(language == 'python3') {
+        const py3ServerConnection = server.createServerProcess('PYTHON3', 'python3', ["-m", "pyls"]);
+        language_server_map.set('python3', py3ServerConnection)
+    } else if(language == 'javascript') {
+        const jsServerConnection = server.createServerProcess('JAVASCRIPT', 'node', ["/home/careerstack/webapps/javascript-typescript-langserver/lib/language-server-stdio"]);
+        language_server_map.set('javascript', jsServerConnection)
+    } else if(language == 'cpp') {
+        const cppServerConnection = server.createServerProcess('CPP', 'sh', ["/home/careerstack/webapps/cquery/build/release/bin/start_cquery.sh"]);
+        language_server_map.set('cpp', cppServerConnection)
+        language_server_map.set('c', cppServerConnection)
+        language_server_map.set('objective-c', cppServerConnection)
+    } else if(language == 'csharp') {
+        const csharpServerConnection = server.createServerProcess('CSHARP', '/home/careerstack/webapps/omnisharp-roslyn/artifacts/scripts/OmniSharp.Stdio', ["-lsp", "-s", "/home/careerstack/lsp_files"]);
+        language_server_map.set('csharp', csharpServerConnection)
+    } else if(language == 'java') {
+        const javaServerConnection = server.createServerProcess('JAVA', 'java', [
+                                                                                "-Dfile.encoding=UTF-8",
+                                                                                "-Declipse.application=org.eclipse.jdt.ls.core.id1",
+                                                                                "-Dosgi.bundles.defaultStartLevel=4",
+                                                                                "-Declipse.product=org.eclipse.jdt.ls.core.product",
+                                                                                "-Dlog.level=ALL",
+                                                                                "-jar", "/home/careerstack/webapps/eclipse.jdt.ls/org.eclipse.jdt.ls.product/target/repository/plugins/org.eclipse.equinox.launcher_1.5.600.v20191014-2022.jar",
+                                                                                "-configuration", "/home/careerstack/webapps/eclipse.jdt.ls/org.eclipse.jdt.ls.product/target/repository/config_linux",
+                                                                                "-data", "/home/careerstack/lsp_files"
+                                                                             ]);
+        language_server_map.set('java', javaServerConnection)
+    }
+
 
     const serverConnection = language_server_map.get(language);
 
@@ -44,8 +56,8 @@ export function launch(socket: rpc.IWebSocket, language: string) {
             if (message.method === lsp.InitializeRequest.type.method) {
                 const initializeParams = message.params as lsp.InitializeParams;
                 initializeParams.processId = process.pid;
-                initializeParams.rootPath = '/home/hackerearth/cquery_files';
-                initializeParams.rootUri = 'file:///home/hackerearth/cquery_files';
+                initializeParams.rootPath = '/home/careerstack/lsp_files';
+                initializeParams.rootUri = 'file:///home/careerstack/lsp_files';
                 console.log('PID: ', process.pid, language);
             }
         }
