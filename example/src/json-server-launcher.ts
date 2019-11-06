@@ -26,14 +26,18 @@ export function launch(socket: rpc.IWebSocket, language: string) {
     } else if(language == 'javascript') {
         const jsServerConnection = server.createServerProcess('JAVASCRIPT', 'node', ["/home/careerstack/webapps/javascript-typescript-langserver/lib/language-server-stdio"]);
         language_server_map.set('javascript', jsServerConnection)
+    } else if(language == 'c') {
+        const cServerConnection = server.createServerProcess('C', 'sh', ["/home/careerstack/webapps/cquery/build/release/bin/start_cquery.sh"]);
+        language_server_map.set('c', cServerConnection)
     } else if(language == 'cpp') {
         const cppServerConnection = server.createServerProcess('CPP', 'sh', ["/home/careerstack/webapps/cquery/build/release/bin/start_cquery.sh"]);
         language_server_map.set('cpp', cppServerConnection)
-        language_server_map.set('c', cppServerConnection)
-        language_server_map.set('objective-c', cppServerConnection)
-    } else if(language == 'csharp') {
-        const csharpServerConnection = server.createServerProcess('CSHARP', '/home/careerstack/webapps/omnisharp-roslyn/artifacts/scripts/OmniSharp.Stdio', ["-lsp", "-s", "/home/careerstack/lsp_files"]);
-        language_server_map.set('csharp', csharpServerConnection)
+    } else if(language == 'objective-c') {
+        const objcServerConnection = server.createServerProcess('CPP', 'sh', ["/home/careerstack/webapps/cquery/build/release/bin/start_cquery.sh"]);
+        language_server_map.set('objective-c', objcServerConnection)
+    //} else if(language == 'csharp') {
+    //    const csharpServerConnection = server.createServerProcess('CSHARP', '/home/careerstack/webapps/omnisharp-roslyn/artifacts/scripts/OmniSharp.Stdio', ["-lsp", "-s", "/home/careerstack/lsp_files"]);
+    //    language_server_map.set('csharp', csharpServerConnection)
     } else if(language == 'java') {
         const javaServerConnection = server.createServerProcess('JAVA', 'java', [
                                                                                 "-Dfile.encoding=UTF-8",

@@ -9,7 +9,7 @@ import {
     MonacoLanguageClient, CloseAction, ErrorAction,
     MonacoServices, createConnection
 } from 'monaco-languageclient';
-import normalizeUrl = require('normalize-url');
+//import normalizeUrl = require('normalize-url');
 const ReconnectingWebSocket = require('reconnecting-websocket');
 
 require('monaco-languages/release/dev/python/python.contribution')
@@ -116,10 +116,12 @@ function createLanguageClient(connection: MessageConnection, language: string): 
     });
 }
 
+/*
 function createUrl(path: string): string {
     const protocol = location.protocol === 'https:' ? 'wss' : 'ws';
     return normalizeUrl(`${protocol}://${location.host}${location.pathname}${path}`);
 }
+*/
 
 function createWebSocket(url: string): WebSocket {
     const socketOptions = {
@@ -182,11 +184,11 @@ function loadSample(language: string, sampleUrl: string) {
 			//	editor = null;
             //}
             console.log("loadSample failed!!");
-			$('#container').empty();
-			$('#container').append('<p class="alert alert-error">Failed to load ' + language + ' sample</p>');
+			$('#monaco-editor').empty();
+			$('#monaco-editor').append('<p class="alert alert-error">Failed to load ' + language + ' sample</p>');
 		}
 	}).done(function (data) {
-		$('#container').empty();
+		$('#monaco-editor').empty();
 
 		/*
 		if(editor) {
@@ -199,7 +201,7 @@ function loadSample(language: string, sampleUrl: string) {
 
         console.log("loadSample done");
 
-		const editor = monaco.editor.create(document.getElementById("container")!, {
+		const editor = monaco.editor.create(document.getElementById("monaco-editor")!, {
 			theme: 'vs-dark',
 			autoIndent: true,
 			cursorBlinking: 'blink',
@@ -235,7 +237,7 @@ function loadSample(language: string, sampleUrl: string) {
 		MonacoServices.install(editor, options);
 
 		// create the web socket
-		const url = createUrl('/sampleServer/?language=' + language)
+        const url = 'wss://analytics-migration.hackerearth.com/sampleServer/?language=' + language;
 		const webSocket = createWebSocket(url);
 
 		// listen when the web socket is opened
