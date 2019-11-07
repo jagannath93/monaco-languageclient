@@ -21,7 +21,6 @@ require('monaco-languages/release/dev/objective-c/objective-c.contribution')
 require('monaco-languages/release/dev/csharp/csharp.contribution')
 
 
-
 // register Monaco languages
 /*
 monaco.languages.register({
@@ -145,11 +144,11 @@ $(document).ready(function() {
 		MODES.set(lang, url)
 	});
 
-    const cSampleUrl = MODES.get('c') || 'c';
-    loadSample('c', cSampleUrl);
+    const pySampleUrl = MODES.get('python') || 'null';
+    loadSample('python2', pySampleUrl);
 
 	$(".language-picker").change(function() {
-        const language:any = $(this).children("option:selected").val() || 'c';
+        const language:any = $(this).children("option:selected").val() || 'python2';
 
         // Custom handling for python variants
         if (language == 'python2' || language == 'python3') {
@@ -201,11 +200,12 @@ function loadSample(language: string, sampleUrl: string) {
 
         console.log("loadSample done");
 
-		const editor = monaco.editor.create(document.getElementById("monaco-editor")!, {
+        (<any>window).editor = monaco.editor.create(document.getElementById("monaco-editor")!, {
 			theme: 'vs-dark',
-			autoIndent: true,
-			cursorBlinking: 'blink',
-			dragAndDrop: true,
+            autoIndent: true,
+            codeLens: false,
+            cursorBlinking: 'blink',
+            dragAndDrop: true,
             //gotoLocation: {
             //	multiple: "goto"
             //},
@@ -213,7 +213,7 @@ function loadSample(language: string, sampleUrl: string) {
             //lightbulb: {
             //	enabled: true
             //},
-		});
+        });
 
 		const language_ext_map = new Map<string, string>();
 		language_ext_map.set('c', 'c')
@@ -230,11 +230,11 @@ function loadSample(language: string, sampleUrl: string) {
 		const filename = "file_" + suffix + "." + fileext;
         const filepath = workingDir + "/" + filename;
 		const newModel = monaco.editor.createModel(data, baseLanguage, monaco.Uri.file(filepath));
-		editor.setModel(newModel);
+        (<any>window).editor.setModel(newModel);
 
 		// install Monaco language client services
 		const options = {rootUri: 'file:///home/careerstack/lsp_files'};
-		MonacoServices.install(editor, options);
+        MonacoServices.install((<any>window).editor, options);
 
 		// create the web socket
         const url = 'wss://analytics-migration.hackerearth.com/sampleServer/?language=' + language;
