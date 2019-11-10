@@ -142,7 +142,26 @@ $(document).ready(function() {
 		const lang: string = item.id;
 		const url = 'https://microsoft.github.io/monaco-editor/index/samples/sample.' + lang + '.txt';
 		MODES.set(lang, url)
-	});
+    });
+
+    (<any>window).editor = monaco.editor.create(document.getElementById("monaco-editor")!, {
+        model: null,
+        theme: 'vs-dark',
+        autoIndent: true,
+        codeLens: false,
+        cursorBlinking: 'blink',
+        dragAndDrop: true,
+        //gotoLocation: {
+        //	multiple: "goto"
+        //},
+        //glyphMargin: true,
+        //lightbulb: {
+        //	enabled: true
+        //},
+    });
+    // install Monaco language client services
+    const options = {rootUri: 'file:///home/careerstack/lsp_files'};
+    MonacoServices.install((<any>window).editor, options);
 
     const pySampleUrl = MODES.get('python') || 'null';
     loadSample('python2', pySampleUrl);
@@ -186,34 +205,24 @@ function loadSample(language: string, sampleUrl: string) {
 			$('#monaco-editor').empty();
 			$('#monaco-editor').append('<p class="alert alert-error">Failed to load ' + language + ' sample</p>');
 		}
-	}).done(function (data) {
-		$('#monaco-editor').empty();
+    }).done(function (data) {
+        //$('#monaco-editor').empty();
 
-		/*
-		if(editor) {
-			const oldModel = editor.getModel();
+        if((<any>window).editor) {
+            /*
+            const oldModel = (<any>window).editor.getModel();
 			if (oldModel) {
-				oldModel.dispose();
-			}
-		}
-		*/
+			    oldModel.dispose();
+            }
+            */
+            //(<any>window).editor.dispose();
+            //(<any>window).editor = null;
+        }
 
-        console.log("loadSample done");
-
-        (<any>window).editor = monaco.editor.create(document.getElementById("monaco-editor")!, {
-			theme: 'vs-dark',
-            autoIndent: true,
-            codeLens: false,
-            cursorBlinking: 'blink',
-            dragAndDrop: true,
-            //gotoLocation: {
-            //	multiple: "goto"
-            //},
-			//glyphMargin: true,
-            //lightbulb: {
-            //	enabled: true
-            //},
-        });
+        if((<any>window).webSocket) {
+            (<any>window).webSocket.close(1000, 'Some reason.', {keepClosed: true, fastClose: true, delay: 0});
+            console.log(">>>> Websocker conn closed.");
+        }
 
 		const language_ext_map = new Map<string, string>();
 		language_ext_map.set('c', 'c')
@@ -229,25 +238,29 @@ function loadSample(language: string, sampleUrl: string) {
 		const fileext = language_ext_map.get(baseLanguage);
 		const filename = "file_" + suffix + "." + fileext;
         const filepath = workingDir + "/" + filename;
-		const newModel = monaco.editor.createModel(data, baseLanguage, monaco.Uri.file(filepath));
-        (<any>window).editor.setModel(newModel);
 
-		// install Monaco language client services
-		const options = {rootUri: 'file:///home/careerstack/lsp_files'};
-        MonacoServices.install((<any>window).editor, options);
+        const oldModel = (<any>window).editor.getModel();
+        const newModel = monaco.editor.createModel(data, baseLanguage, monaco.Uri.file(filepath));
+        (<any>window).editor.setModel(newModel);
+        if(oldModel) {
+            oldModel.dispose();
+        }
 
 		// create the web socket
         const url = 'wss://analytics-migration.hackerearth.com/sampleServer/?language=' + language;
-		const webSocket = createWebSocket(url);
+        const webSocket = createWebSocket(url);
+        (<any>window).webSocket = webSocket;
+        console.log("==== Websocker conn opened.");
 
 		// listen when the web socket is opened
 		listen({
-			webSocket,
-			onConnection: connection => {
+            webSocket,
+            onConnection: connection => {
+                console.log("Websocket conn estd!");
 				// create and start the language client
 				const languageClient = createLanguageClient(connection, language);
 				const disposable = languageClient.start();
-				connection.onClose(() => disposable.dispose());
+                connection.onClose(() => {disposable.dispose(); console.log("Language client disposed!");});
 			}
 		});
 	});
