@@ -151,6 +151,7 @@ $(document).ready(function() {
         codeLens: false,
         cursorBlinking: 'blink',
         dragAndDrop: true,
+        links: false,
         //gotoLocation: {
         //	multiple: "goto"
         //},
@@ -194,14 +195,13 @@ function loadSample(language: string, sampleUrl: string) {
 		url: sampleUrl,
 		dataType: 'text',
 		error: function () {
-			//if (typeof editor !== 'undefined') {
-			//	if (editor.getModel()) {
-			//		editor.getModel().dispose();
-			//	}
-			//	editor.dispose();
-			//	editor = null;
-            //}
-            console.log("loadSample failed!!");
+            if((<any>window).editor) {
+                if((<any>window).editor.getModel()) {
+                    (<any>window).editor.getModel().dispose();
+			    }
+		        (<any>window).editor.dispose();
+                (<any>window).editor = null;
+            }
 			$('#monaco-editor').empty();
 			$('#monaco-editor').append('<p class="alert alert-error">Failed to load ' + language + ' sample</p>');
 		}
@@ -247,7 +247,7 @@ function loadSample(language: string, sampleUrl: string) {
         }
 
 		// create the web socket
-        const url = 'wss://analytics-migration.hackerearth.com/sampleServer/?language=' + language;
+        const url = 'wss://infosys-demo.hackerearth.com/sampleServer/?language=' + language;
         const webSocket = createWebSocket(url);
         (<any>window).webSocket = webSocket;
         console.log("==== Websocker conn opened.");
